@@ -2,6 +2,25 @@
 #include "PhysicalMemory.h"
 #include "MemoryConstants.h"
 
+struct frameSearchInfo{
+    //case 1: frame is empty
+    bool foundEmptyTable = false;
+    word_t emptyFrame = 0;
+    word_t emptyFrameParent = 0;
+    uint64_t emptyFrameIndex = 0;
+
+    //case 2: unused frame
+    word_t maxFrameIndex = 0;
+
+    //case 3: evictFrame
+    word_t evictFrame = 0;
+    word_t evictFrameParent = 0;
+    uint64_t evictParentIndex = 0;
+    uint64_t evictPage = -1;
+    uint64_t distance = 0;
+};
+
+
 /*
  * Initialize the virtual memory
  */
