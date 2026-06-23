@@ -110,8 +110,24 @@ frameSearchInfo findFrame(uint64_t virtualPage, word_t noEvictFrame) {
 
 //TODO
 void dfs() {}
-bool isEmptyTable(){}
-uint64_t calculateDistance() {}
+
+bool isEmptyTable(word_t frame){
+        for (uint64_t i = 0; i < PAGE_SIZE; i++){
+        word_t value;
+        PMread(frame * PAGE_SIZE + i, &value);
+        if (value != 0){
+            return false;
+        }
+    }
+    return true;
+}
+
+uint64_t calculateDistance(uint64_t a, uint64_t b) {
+    // calculate abs value
+    uint64_t diff = (a > b) ? (a - b) : (b - a);
+    // return min
+    return (diff < NUM_PAGES - diff) ? diff : (NUM_PAGES - diff);
+}
 
 
 
@@ -142,4 +158,20 @@ int VMwrite(uint64_t virtualAddress, word_t value) {
 }
 
 //TODO
-uint64_t VMgetMapping(uint64_t virtualPage) {} 
+/* Returns the physical frame index that virtualPage currently maps to,
+ * or 0 if the page is not resident in RAM (never written or was evicted).
+ * Does not allocate or restore anything — purely a read-only table walk.
+ */
+uint64_t VMgetMapping(uint64_t virtualPage) {
+    word_t frame = 0;
+    for (int level = 0; level < TABLES_DEPTH; level++){
+        uint64_t index = getIndex(virtualPage, level);
+        word_t nextFrame;
+        PMread(frame * PAGE_SIZE + index, &nextFrame);  
+        if (nextFrame == 0){
+            return 0;
+        }
+        frame = nextFrame;
+    }
+    return frame;
+} 
