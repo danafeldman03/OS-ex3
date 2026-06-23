@@ -10,6 +10,7 @@
  * @return The index for the given level.
  */
 uint64_t getIndex(uint64_t virtualAddress, int level){
+    uint64_t shiftAmount = (TABLES_DEPTH - level) * OFFSET_WIDTH;
     uint64_t indexBits;
     if(level == 0){
         indexBits = VIRTUAL_ADDRESS_WIDTH - OFFSET_WIDTH * TABLES_DEPTH;
@@ -17,8 +18,7 @@ uint64_t getIndex(uint64_t virtualAddress, int level){
     else{
         indexBits = OFFSET_WIDTH;
     }
-    uint64_t shift = VIRTUAL_ADDRESS_WIDTH - OFFSET_WIDTH - (level == 0 ? indexBits : OFFSET_WIDTH);
-    return (virtualAddress >> shift) & ((1ULL << indexBits) - 1);
+    return (virtualAddress >> shiftAmount) & ((1ULL << indexBits) - 1);
 }
 
 
