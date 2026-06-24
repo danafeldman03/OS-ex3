@@ -43,7 +43,8 @@ uint64_t calculateDistance(uint64_t a, uint64_t b) {
 
 
 /**
- * Finds a suitable frame for the virtual page by searching through the page tables.
+ * Finds a suitable frame for the virtual page by searching through the page 
+ tables.
  * @param virtualPage The virtual page that needs a frame.
  * @param noEvictFrame A frame that should not be evicted (if applicable).
  * @return A structure containing information about the found frame.
@@ -57,14 +58,16 @@ frameSearchInfo findFrame(uint64_t virtualPage, word_t noEvictFrame) {
 
 //TODO
 void dfs(word_t frame, word_t parentFrame, uint64_t parentIndex, int level,
-        uint64_t currentPage, uint64_t targetPage, word_t noEvictFrame, frameSearchInfo &info) {
+        uint64_t currentPage, uint64_t targetPage, word_t noEvictFrame, 
+        frameSearchInfo &info) {
     // Update max 
     info.maxFrameIndex = std::max(info.maxFrameIndex, frame);
     // if we got to a leaf - deal with eviction and reurn
     if (level == TABLES_DEPTH){
         if(frame != noEvictFrame){
             uint64_t dist = calculateDistance(targetPage, currentPage);
-            if (!info.foundEvictVictim || dist > info.distance || (dist == info.distance && currentPage < info.evictPage)){
+            if (!info.foundEvictVictim || dist > info.distance || 
+                (dist == info.distance && currentPage < info.evictPage)){
                 info.foundEvictVictim = true;
                 info.evictFrame = frame;
                 info.evictFrameParent = parentFrame;
@@ -83,7 +86,8 @@ void dfs(word_t frame, word_t parentFrame, uint64_t parentIndex, int level,
         PMread(frame * PAGE_SIZE + i, &nextFrame);
         if (nextFrame != 0){
             isEmpty = false;
-            dfs(nextFrame, frame, i, level + 1, (currentPage << OFFSET_WIDTH)|i, targetPage, noEvictFrame, info);
+            dfs(nextFrame, frame, i, level + 1, 
+                (currentPage << OFFSET_WIDTH)|i, targetPage, noEvictFrame, info);
         }
     }
     // if it is an empty table
@@ -163,7 +167,8 @@ int translateVirtualAddress(uint64_t virtualAddress, uint64_t* physicalAddress) 
         word_t nextFrame = 0;
         PMread(currFrame * PAGE_SIZE + currentIndex, &nextFrame);
         if(nextFrame == 0){
-            nextFrame = pageFaultHandler(virtualPage, currFrame, currentIndex, level, currFrame);
+            nextFrame = pageFaultHandler(virtualPage, currFrame, currentIndex,
+                 level, currFrame);
         }
         currFrame = nextFrame;
     }
