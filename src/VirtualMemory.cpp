@@ -23,32 +23,80 @@ uint64_t getIndex(uint64_t virtualAddress, int level){
 }
 
 
-/**
-* Translates a virtual address to a physical address.
-* @param virtualAddress The virtual address to translate.
-* @param physicalAddress A pointer to store the resulting physical address.
-* @return 1 on success, 0 on failure (if the address cannot be
-* mapped to a physical address for any reason).
-*/
-int translateVirtualAddress(uint64_t virtualAddress, uint64_t* physicalAddress) {
-    if(virtualAddress >= VIRTUAL_MEMORY_SIZE){
-        return 0;
-    }
-    uint64_t virtualPage = virtualAddress >> OFFSET_WIDTH;
-    uint64_t offset = virtualAddress & ((1ULL << OFFSET_WIDTH) - 1);
-    word_t currFrame = 0; // root frame
-    for(int level = 0; level < TABLES_DEPTH; level++){
-        uint64_t currentIndex = getIndex(virtualAddress, level);
-        word_t nextFrame = 0;
-        PMread(currFrame * PAGE_SIZE + currentIndex, &nextFrame);
-        if(nextFrame == 0){
-            nextFrame = pageFaultHandler(virtualPage, currFrame, currentIndex, level, currFrame);
+bool isEmptyTable(word_t frame){
+        for (uint64_t i = 0; i < PAGE_SIZE; i++){
+        word_t value;
+        PMread(frame * PAGE_SIZE + i, &value);
+        if (value != 0){
+            return false;
         }
-        currFrame = nextFrame;
     }
-    *physicalAddress = currFrame * PAGE_SIZE + offset;
-    return 1;
+    return true;
 }
+
+uint64_t calculateDistance(uint64_t a, uint64_t b) {
+    // calculate abs value
+    uint64_t diff = (a > b) ? (a - b) : (b - a);
+    // return min
+    return (diff < NUM_PAGES - diff) ? diff : (NUM_PAGES - diff);
+}
+
+
+/**
+ * Finds a suitable frame for the virtual page by searching through the page tables.
+ * @param virtualPage The virtual page that needs a frame.
+ * @param noEvictFrame A frame that should not be evicted (if applicable).
+ * @return A structure containing information about the found frame.
+ */
+frameSearchInfo findFrame(uint64_t virtualPage, word_t noEvictFrame) {
+    frameSearchInfo info;
+    dfs(0, 0, 0, 0, 0, virtualPage, noEvictFrame, info);
+    return info;
+}
+
+
+//TODO
+void dfs(word_t frame, word_t parentFrame, uint64_t parentIndex, int level,
+        uint64_t currentPage, uint64_t targetPage, word_t noEvictFrame, frameSearchInfo &info) {
+    // Update max 
+    info.maxFrameIndex = std::max(info.maxFrameIndex, frame);
+    // if we got to a leaf - deal with eviction and reurn
+    if (level == TABLES_DEPTH){
+        if(frame != noEvictFrame){
+            uint64_t dist = calculateDistance(targetPage, currentPage);
+            if (!info.foundEvictVictim || dist > info.distance || (dist == info.distance && currentPage < info.evictPage)){
+                info.foundEvictVictim = true;
+                info.evictFrame = frame;
+                info.evictFrameParent = parentFrame;
+                info.evictParentIndex = parentIndex;
+                info.evictPage = currentPage;
+                info.distance = dist;
+            }
+        }
+        return;
+    }
+    // not a leaf - internal level table
+    bool isEmpty = true;
+    for (uint64_t i = 0; i < PAGE_SIZE; i++)
+    {
+        word_t nextFrame;
+        PMread(frame * PAGE_SIZE + i, &nextFrame);
+        if (nextFrame != 0){
+            isEmpty = false;
+            dfs(nextFrame, frame, i, level + 1, (currentPage << OFFSET_WIDTH)|i, targetPage, noEvictFrame, info);
+        }
+    }
+    // if it is an empty table
+    if (isEmpty && frame != 0 && frame != noEvictFrame){
+        info.foundEmptyTable = true;
+        info.emptyFrame = frame;
+        info.emptyFrameParent = parentFrame;
+        info.emptyFrameIndex = parentIndex;
+    }
+}
+
+
+
 
 
 /**
@@ -95,79 +143,37 @@ int level, word_t noEvictFrame) {
     return frame;
 }
 
+
 /**
- * Finds a suitable frame for the virtual page by searching through the page tables.
- * @param virtualPage The virtual page that needs a frame.
- * @param noEvictFrame A frame that should not be evicted (if applicable).
- * @return A structure containing information about the found frame.
- */
-frameSearchInfo findFrame(uint64_t virtualPage, word_t noEvictFrame) {
-    frameSearchInfo info;
-    dfs(0, 0, 0, 0, virtualPage, noEvictFrame, info);
-    return info;
-}
-
-
-
-//TODO
-void dfs(word_t frame, word_t parentFrame, uint64_t parentIndex, int level,
-        uint64_t virtualPage, word_t noEvictFrame, frameSearchInfo &info) {
-            // todo: understand
-            if (frame == noEvictFrame)
-                return;
-            // Update max 
-            info.maxFrameIndex = std::max(info.maxFrameIndex, frame);
-            // if we got to a leaf - deal with eviction and reurn
-            if (level == TABLES_DEPTH){
-            uint64_t dist = calculateDistance(virtualPage, info.evictPage);
-            if (dist > info.distance || (dist == info.distance && virtualPage < info.evictPage)){
-            info.evictFrame = frame;
-            info.evictFrameParent = parentFrame;
-            info.evictParentIndex = parentIndex;
-            info.evictPage = virtualPage;
-            info.distance = dist;
+* Translates a virtual address to a physical address.
+* @param virtualAddress The virtual address to translate.
+* @param physicalAddress A pointer to store the resulting physical address.
+* @return 1 on success, 0 on failure (if the address cannot be
+* mapped to a physical address for any reason).
+*/
+int translateVirtualAddress(uint64_t virtualAddress, uint64_t* physicalAddress) {
+    if(virtualAddress >= VIRTUAL_MEMORY_SIZE){
+        return 0;
+    }
+    uint64_t virtualPage = virtualAddress >> OFFSET_WIDTH;
+    uint64_t offset = virtualAddress & ((1ULL << OFFSET_WIDTH) - 1);
+    word_t currFrame = 0; // root frame
+    for(int level = 0; level < TABLES_DEPTH; level++){
+        uint64_t currentIndex = getIndex(virtualAddress, level);
+        word_t nextFrame = 0;
+        PMread(currFrame * PAGE_SIZE + currentIndex, &nextFrame);
+        if(nextFrame == 0){
+            nextFrame = pageFaultHandler(virtualPage, currFrame, currentIndex, level, currFrame);
         }
-        return;
+        currFrame = nextFrame;
     }
-    // not a leaf - internal level table
-    bool isEmpty = true;
-    for (uint64_t i = 0; i < PAGE_SIZE; i++)
-    {
-        word_t nextFrame;
-        PMread(frame * PAGE_SIZE + i, &nextFrame);
-        if (nextFrame != 0){
-            isEmpty = false;
-            dfs(nextFrame, frame, i, level + 1, (virtualPage << OFFSET_WIDTH)|i, info);
-        }
-    }
-    // if it is an empty table
-    if (isEmpty){
-        info.foundEmptyTable = true;
-        info.emptyFrame = frame;
-        info.emptyFrameParent = parentFrame;
-        info.emptyFrameIndex = parentIndex;
-    }
+    *physicalAddress = currFrame * PAGE_SIZE + offset;
+    return 1;
 }
 
 
 
-bool isEmptyTable(word_t frame){
-        for (uint64_t i = 0; i < PAGE_SIZE; i++){
-        word_t value;
-        PMread(frame * PAGE_SIZE + i, &value);
-        if (value != 0){
-            return false;
-        }
-    }
-    return true;
-}
 
-uint64_t calculateDistance(uint64_t a, uint64_t b) {
-    // calculate abs value
-    uint64_t diff = (a > b) ? (a - b) : (b - a);
-    // return min
-    return (diff < NUM_PAGES - diff) ? diff : (NUM_PAGES - diff);
-}
 
 
 
@@ -205,7 +211,7 @@ int VMwrite(uint64_t virtualAddress, word_t value) {
 uint64_t VMgetMapping(uint64_t virtualPage) {
     word_t frame = 0;
     for (int level = 0; level < TABLES_DEPTH; level++){
-        uint64_t index = getIndex(virtualPage, level);
+        uint64_t index = getIndex(virtualPage << OFFSET_WIDTH, level);
         word_t nextFrame;
         PMread(frame * PAGE_SIZE + index, &nextFrame);  
         if (nextFrame == 0){

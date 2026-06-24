@@ -1,0 +1,5 @@
+VMwrite valid addr:   1
+VMread  valid addr:   1
+VMwrite invalid addr: 0
+VMread  invalid addr: 0
+PASS

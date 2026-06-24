@@ -1,0 +1,2 @@
+Wrote 0xcafebabe to address 100, read back 0xcafebabe
+PASS

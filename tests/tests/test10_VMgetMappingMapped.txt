@@ -1,0 +1,5 @@
+Page 0 mapped: YES
+Page 5 mapped: YES
+Value at page 0: 0xdead1234
+Value at page 5: 0xbeef5678
+PASS

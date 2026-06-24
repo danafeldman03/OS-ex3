@@ -1,0 +1,7 @@
+Step 2 - Page 0: 100
+Step 5 - Page 1: 200
+Step 6 - Page 0 (from swap): 100
+Step 7 - Page 2: 300
+Step 8 - Page 3 (from swap): 400
+Step 10 - Page 0 (overwritten): 500
+PASS

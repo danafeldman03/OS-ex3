@@ -1,0 +1,1 @@
+Value at address 0 (unwritten): 0

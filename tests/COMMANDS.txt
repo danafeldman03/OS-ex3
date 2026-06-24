@@ -1,0 +1,133 @@
+============================================================
+  HOW TO COMPILE AND RUN EVERY TEST
+  Run all commands from the project root: ex3_OS/
+============================================================
+
+------------------------------------------------------------
+  YOUR OWN CODE  (g++)
+------------------------------------------------------------
+
+-- Tests 1-7, 9, 10  (default memory constants) --
+
+g++ -std=c++17 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/test1_emptyInput.cpp      -o t1  && ./t1
+g++ -std=c++17 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/test2_invalidAddress.cpp   -o t2  && ./t2
+g++ -std=c++17 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/test3_writeReadSingle.cpp  -o t3  && ./t3
+g++ -std=c++17 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/test4_sequentialWrites.cpp -o t4  && ./t4
+g++ -std=c++17 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/test5_overwrite.cpp        -o t5  && ./t5
+g++ -std=c++17 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/test6_firstAndLastAddr.cpp -o t6  && ./t6
+g++ -std=c++17 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/test7_manyPages.cpp        -o t7  && ./t7
+g++ -std=c++17 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/test9_VMgetMappingUnmapped.cpp  -o t9  && ./t9
+g++ -std=c++17 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/test10_VMgetMappingMapped.cpp  -o t10 && ./t10
+
+-- Test 8  (small memory: OFFSET_WIDTH=3, PHYSICAL=5, VIRTUAL=6) --
+
+g++ -std=c++17 -DOFFSET_WIDTH=3 -DPHYSICAL_ADDRESS_WIDTH=5 -DVIRTUAL_ADDRESS_WIDTH=6 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/test8_eviction.cpp -o t8 && ./t8
+
+------------------------------------------------------------
+  SCHOOL SOLUTION  (~os/ex/ex3/run_school_solution)
+------------------------------------------------------------
+
+-- Tests 1-7, 9, 10  (default memory constants) --
+
+~os/ex/ex3/run_school_solution tests/test1_emptyInput.cpp
+~os/ex/ex3/run_school_solution tests/test2_invalidAddress.cpp
+~os/ex/ex3/run_school_solution tests/test3_writeReadSingle.cpp
+~os/ex/ex3/run_school_solution tests/test4_sequentialWrites.cpp
+~os/ex/ex3/run_school_solution tests/test5_overwrite.cpp
+~os/ex/ex3/run_school_solution tests/test6_firstAndLastAddr.cpp
+~os/ex/ex3/run_school_solution tests/test7_manyPages.cpp
+~os/ex/ex3/run_school_solution tests/test9_VMgetMappingUnmapped.cpp
+~os/ex/ex3/run_school_solution tests/test10_VMgetMappingMapped.cpp
+
+-- Test 8  (small memory override — pass overrides file first) --
+
+~os/ex/ex3/run_school_solution example/overrides.h tests/test8_eviction.cpp
+
+------------------------------------------------------------
+  COMPARE OUTPUT AGAINST EXPECTED .txt  (your code)
+------------------------------------------------------------
+
+diff <(./t1)  tests/test1_emptyInput.txt
+diff <(./t2)  tests/test2_invalidAddress.txt
+diff <(./t3)  tests/test3_writeReadSingle.txt
+diff <(./t4)  tests/test4_sequentialWrites.txt
+diff <(./t5)  tests/test5_overwrite.txt
+diff <(./t6)  tests/test6_firstAndLastAddr.txt
+diff <(./t7)  tests/test7_manyPages.txt
+diff <(./t8)  tests/test8_eviction.txt
+diff <(./t9)  tests/test9_VMgetMappingUnmapped.txt
+diff <(./t10) tests/test10_VMgetMappingMapped.txt
+
+============================================================
+  ADVANCED TESTS  (tests/advanced_tests/)
+============================================================
+
+  Overrides used:
+    SMALL   = OFFSET_WIDTH=3 PHYSICAL_ADDRESS_WIDTH=5 VIRTUAL_ADDRESS_WIDTH=6
+              (same as example/overrides.h  →  PAGE_SIZE=8, NUM_FRAMES=4, TABLES_DEPTH=1)
+    DEPTH2  = OFFSET_WIDTH=2 PHYSICAL_ADDRESS_WIDTH=4 VIRTUAL_ADDRESS_WIDTH=6
+              (tests/advanced_tests/overrides_depth2.h  →  PAGE_SIZE=4, NUM_FRAMES=4, TABLES_DEPTH=2)
+    DEFAULT = no override
+
+  Test                                          Override
+  advanced_test1_evictionTieBreaking            SMALL
+  advanced_test2_writeZero                      DEFAULT
+  advanced_test3_VMgetMappingAfterEviction      SMALL
+  advanced_test4_emptyTableReclamation          DEPTH2
+  advanced_test5_returnCodes                    DEFAULT
+  advanced_test6_multiLevelFault                DEFAULT
+  advanced_test7_interleavedAccess              SMALL
+
+------------------------------------------------------------
+  ADVANCED — YOUR OWN CODE  (g++)
+------------------------------------------------------------
+
+-- DEFAULT constants --
+
+g++ -std=c++17 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/advanced_tests/advanced_test2_writeZero.cpp       -o at2 && ./at2
+g++ -std=c++17 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/advanced_tests/advanced_test5_returnCodes.cpp     -o at5 && ./at5
+g++ -std=c++17 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/advanced_tests/advanced_test6_multiLevelFault.cpp -o at6 && ./at6
+
+-- SMALL memory (OFFSET_WIDTH=3 PHYSICAL=5 VIRTUAL=6) --
+
+g++ -std=c++17 -DOFFSET_WIDTH=3 -DPHYSICAL_ADDRESS_WIDTH=5 -DVIRTUAL_ADDRESS_WIDTH=6 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/advanced_tests/advanced_test1_evictionTieBreaking.cpp       -o at1 && ./at1
+g++ -std=c++17 -DOFFSET_WIDTH=3 -DPHYSICAL_ADDRESS_WIDTH=5 -DVIRTUAL_ADDRESS_WIDTH=6 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/advanced_tests/advanced_test3_VMgetMappingAfterEviction.cpp -o at3 && ./at3
+g++ -std=c++17 -DOFFSET_WIDTH=3 -DPHYSICAL_ADDRESS_WIDTH=5 -DVIRTUAL_ADDRESS_WIDTH=6 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/advanced_tests/advanced_test7_interleavedAccess.cpp          -o at7 && ./at7
+
+-- DEPTH2 memory (OFFSET_WIDTH=2 PHYSICAL=4 VIRTUAL=6) --
+
+g++ -std=c++17 -DOFFSET_WIDTH=2 -DPHYSICAL_ADDRESS_WIDTH=4 -DVIRTUAL_ADDRESS_WIDTH=6 -I src/ src/VirtualMemory.cpp src/PhysicalMemory.cpp tests/advanced_tests/advanced_test4_emptyTableReclamation.cpp -o at4 && ./at4
+
+------------------------------------------------------------
+  ADVANCED — SCHOOL SOLUTION  (~os/ex/ex3/run_school_solution)
+------------------------------------------------------------
+
+-- DEFAULT constants --
+
+~os/ex/ex3/run_school_solution tests/advanced_tests/advanced_test2_writeZero.cpp
+~os/ex/ex3/run_school_solution tests/advanced_tests/advanced_test5_returnCodes.cpp
+~os/ex/ex3/run_school_solution tests/advanced_tests/advanced_test6_multiLevelFault.cpp
+
+-- SMALL memory (pass example/overrides.h first) --
+
+~os/ex/ex3/run_school_solution example/overrides.h tests/advanced_tests/advanced_test1_evictionTieBreaking.cpp
+~os/ex/ex3/run_school_solution example/overrides.h tests/advanced_tests/advanced_test3_VMgetMappingAfterEviction.cpp
+~os/ex/ex3/run_school_solution example/overrides.h tests/advanced_tests/advanced_test7_interleavedAccess.cpp
+
+-- DEPTH2 memory (pass overrides_depth2.h first) --
+
+~os/ex/ex3/run_school_solution tests/advanced_tests/overrides_depth2.h tests/advanced_tests/advanced_test4_emptyTableReclamation.cpp
+
+------------------------------------------------------------
+  ADVANCED — COMPARE OUTPUT AGAINST EXPECTED .txt  (your code)
+------------------------------------------------------------
+
+diff <(./at1) tests/advanced_tests/advanced_test1_evictionTieBreaking.txt
+diff <(./at2) tests/advanced_tests/advanced_test2_writeZero.txt
+diff <(./at3) tests/advanced_tests/advanced_test3_VMgetMappingAfterEviction.txt
+diff <(./at4) tests/advanced_tests/advanced_test4_emptyTableReclamation.txt
+diff <(./at5) tests/advanced_tests/advanced_test5_returnCodes.txt
+diff <(./at6) tests/advanced_tests/advanced_test6_multiLevelFault.txt
+diff <(./at7) tests/advanced_tests/advanced_test7_interleavedAccess.txt
+
+============================================================
