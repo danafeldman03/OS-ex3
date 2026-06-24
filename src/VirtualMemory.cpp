@@ -1,5 +1,6 @@
 #include "VirtualMemory.h"
 #include "MemoryConstants.h"
+#include <algorithm>
 
 //------------------------------Helper Functions------------------------------------
 
@@ -102,14 +103,53 @@ int level, word_t noEvictFrame) {
  */
 frameSearchInfo findFrame(uint64_t virtualPage, word_t noEvictFrame) {
     frameSearchInfo info;
-    dfs();
+    dfs(0, 0, 0, 0, virtualPage, noEvictFrame, info);
     return info;
 }
 
 
 
 //TODO
-void dfs() {}
+void dfs(word_t frame, word_t parentFrame, uint64_t parentIndex, int level,
+        uint64_t virtualPage, word_t noEvictFrame, frameSearchInfo &info) {
+            // todo: understand
+            if (frame == noEvictFrame)
+                return;
+            // Update max 
+            info.maxFrameIndex = std::max(info.maxFrameIndex, frame);
+            // if we got to a leaf - deal with eviction and reurn
+            if (level == TABLES_DEPTH){
+            uint64_t dist = calculateDistance(virtualPage, info.evictPage);
+            if (dist > info.distance || (dist == info.distance && virtualPage < info.evictPage)){
+            info.evictFrame = frame;
+            info.evictFrameParent = parentFrame;
+            info.evictParentIndex = parentIndex;
+            info.evictPage = virtualPage;
+            info.distance = dist;
+        }
+        return;
+    }
+    // not a leaf - internal level table
+    bool isEmpty = true;
+    for (uint64_t i = 0; i < PAGE_SIZE; i++)
+    {
+        word_t nextFrame;
+        PMread(frame * PAGE_SIZE + i, &nextFrame);
+        if (nextFrame != 0){
+            isEmpty = false;
+            dfs(nextFrame, frame, i, level + 1, (virtualPage << OFFSET_WIDTH)|i, info);
+        }
+    }
+    // if it is an empty table
+    if (isEmpty){
+        info.foundEmptyTable = true;
+        info.emptyFrame = frame;
+        info.emptyFrameParent = parentFrame;
+        info.emptyFrameIndex = parentIndex;
+    }
+}
+
+
 
 bool isEmptyTable(word_t frame){
         for (uint64_t i = 0; i < PAGE_SIZE; i++){
